@@ -8,6 +8,13 @@
         "default_popup": "index.html",
         "default_title": "Click to open the menu!"
     },
+    "background": {
+        "service_worker": "/dist/background.js",
+        "type": "module"
+    },
+    "permissions": ["webRequest"],
+
+    "host_permissions": ["*://*.myanimelist.net/*"],
 
     "author": "kale#0104"
 }
