@@ -1,0 +1,13 @@
+{
+    "manifest_version": 3,
+    "name": "What to Watch Now - mal",
+    "version": "1.0.0",
+
+    "description": "A plain text description",
+    "action": {
+        "default_popup": "index.html",
+        "default_title": "Click to open the menu!"
+    },
+
+    "author": "kale#0104"
+}

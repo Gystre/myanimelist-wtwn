@@ -1,0 +1,11 @@
+{
+    "name": "wtwn",
+    "version": "1.0.0",
+    "devDependencies": {
+        "typescript": "^4.9.5"
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc -w"
+    }
+}
