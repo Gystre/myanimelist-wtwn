@@ -6,7 +6,6 @@ enum Status {
     PlanToWatch = 6,
 }
 
-// using web requests, intercept all requests and print the headers and the payload
 chrome.webRequest.onBeforeRequest.addListener(
     function (details) {
         const url = details.url;
