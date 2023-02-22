@@ -5,14 +5,20 @@
 
     "description": "A plain text description",
     "action": {
-        "default_popup": "index.html",
+        "default_popup": "popup.html",
         "default_title": "Click to open the menu!"
     },
     "background": {
         "service_worker": "/dist/background.js",
         "type": "module"
     },
-    "permissions": ["webRequest"],
+    "content_scripts": [
+        {
+            "matches": ["*://*.myanimelist.net/*"],
+            "js": ["/dist/content.js"]
+        }
+    ],
+    "permissions": ["webRequest", "storage"],
 
     "host_permissions": ["*://*.myanimelist.net/*"],
 
