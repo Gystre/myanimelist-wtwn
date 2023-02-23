@@ -30,17 +30,14 @@ const updateList = (id: number, score: number, status: Status) => {
         return;
     }
 
-    // user doesn't exist then make new entry
+    // user doesn't exist, make a new entry
     if (!ptwList[username]) ptwList[username] = {};
 
-    // if the user is signed in, update the list
     if (status == Status.PlanToWatch) {
         ptwList[username][id] = score;
     } else {
         delete ptwList[username][id];
     }
-
-    console.log(ptwList);
 
     // send data to chrome.sync
     // chrome.storage.sync.set({ ptwList: ptwList }, function () {

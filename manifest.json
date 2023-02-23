@@ -9,16 +9,16 @@
         "default_title": "Click to open the menu!"
     },
     "background": {
-        "service_worker": "/dist/background.js",
+        "service_worker": "background.bundle.js",
         "type": "module"
     },
     "content_scripts": [
         {
             "matches": ["*://*.myanimelist.net/*"],
-            "js": ["/dist/content.js"]
+            "js": ["content.bundle.js"]
         }
     ],
-    "permissions": ["webRequest", "storage"],
+    "permissions": ["storage"],
 
     "host_permissions": ["*://*.myanimelist.net/*"],
 

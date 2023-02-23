@@ -2,6 +2,12 @@
 
 what to watch now, chrome extension for myanimelist
 
+Using
+
+-   webpack
+-   typescript
+-   tailwindcss
+
 # TODO:
 
 -   if add anime from myanimelist that isn't in wtwn list, pop up popup.html asking to add it to wtwn
@@ -19,5 +25,5 @@ what to watch now, chrome extension for myanimelist
 
 # Notes
 
--   Need webpack for tailwind and jquery
+-   IF YOU ADD A NEW TS FILE, ADD IT TO THE WEBPACK CONFIG FILE (might be way to select all files in folder?)
 -   not possible to make background script pop open popup.html

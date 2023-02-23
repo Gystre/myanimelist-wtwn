@@ -2,11 +2,7 @@
 node_modules/
 
 # Ignore compiled JavaScript files
-/dist/*.js
-/dist/*.js.map
-
-# Ignore compiled TypeScript declaration files
-/dist/*.d.ts
+/dist
 
 # Ignore any hidden files or directories
 .*
