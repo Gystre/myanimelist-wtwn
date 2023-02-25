@@ -18,7 +18,7 @@
             "js": ["content.bundle.js"]
         }
     ],
-    "permissions": ["storage"],
+    "permissions": ["storage", "tabs"],
 
     "host_permissions": ["*://*.myanimelist.net/*"],
 

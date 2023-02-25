@@ -9,18 +9,34 @@ enum Status {
 // empty username = not signed in
 let username = "saist";
 
-// local data that will be occasionally synced with chrome.sync
-// ptwList[username][id] = score;
-let ptwList: {
+export type MasterList = {
     [username: string]: {
-        [id: number]: number;
+        [id: number]: {
+            // 0-10
+            score: number;
+
+            // timestamp for when was added, created via Date.now()
+            createdAt: number;
+        };
     };
-} = {
+};
+
+// local data that will be occasionally synced with chrome.sync
+// contains all data for all users
+let masterList: MasterList = {
     saist: {
-        1: 10,
-        2: 10,
-        3: 10,
-        4: 10,
+        "48417": {
+            score: 10,
+            createdAt: 1677271036214,
+        },
+        "39071": {
+            score: 10,
+            createdAt: 1677271036214,
+        },
+        "12189": {
+            score: 10,
+            createdAt: 1677271036214,
+        },
     },
 };
 
@@ -31,16 +47,19 @@ const updateList = (id: number, score: number, status: Status) => {
     }
 
     // user doesn't exist, make a new entry
-    if (!ptwList[username]) ptwList[username] = {};
+    if (!masterList[username]) masterList[username] = {};
 
     if (status == Status.PlanToWatch) {
-        ptwList[username][id] = score;
+        masterList[username][id] = {
+            score: score,
+            createdAt: Date.now(),
+        };
     } else {
-        delete ptwList[username][id];
+        delete masterList[username][id];
     }
 
     // send data to chrome.sync
-    // chrome.storage.sync.set({ ptwList: ptwList }, function () {
+    // chrome.storage.sync.set({ masterList: masterList }, function () {
     //     console.log("WTWN: data saved");
     // });
 };
@@ -56,6 +75,6 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
         updateList(id, score, status);
     } else if (request == "getList") {
-        sendResponse({ username, list: ptwList[username] });
+        sendResponse({ username, masterList });
     }
 });

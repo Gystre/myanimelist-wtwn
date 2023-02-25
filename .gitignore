@@ -5,7 +5,6 @@ node_modules/
 /dist
 
 # Ignore any hidden files or directories
-.*
 !/.gitignore
 !/.editorconfig
 

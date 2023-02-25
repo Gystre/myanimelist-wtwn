@@ -1,0 +1,78 @@
+<div class="flex flex-col justify-center pt-2">
+    <div class="px-6">
+        <input
+            class="bg-black5 text-black text-md rounded-lg w-full px-4 py-2"
+            type="text"
+            id="search"
+            placeholder="Search"
+        />
+    </div>
+
+    <div class="mb-2"></div>
+
+    <!-- example anime to be copied -->
+    <div id="exampleDisplay" class="hidden">
+        <div class="flex-col">
+            <div class="flex">
+                <img
+                    class="h-32 rounded-md drop-shadow-md"
+                    src="https://cdn.myanimelist.net/images/anime/1633/111518.jpg"
+                    alt="Name of anime"
+                />
+                <div class="mr-2"></div>
+                <!-- information -->
+                <div class="flex flex-col justify-between">
+                    <div class="flex flex-col">
+                        <theTitle>Title</theTitle>
+                        <genre class="font-bold">Genres: </genre>
+                        <theme class="font-bold">Themes: </theme>
+                        <div>
+                            <button
+                                id="linkButton"
+                                class="flex items-center text-blue-600"
+                            >
+                                Link
+                                <div class="mr-1"></div>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="1.5"
+                                    stroke="currentColor"
+                                    class="w-4 h-4"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <button id="editButton" class="text-blue-600">
+                            Edit
+                        </button>
+                        <div class="mr-2"></div>
+                        <div>•</div>
+                        <div class="mr-2"></div>
+                        <timestamp>Wanted to watch:</timestamp>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-2"></div>
+
+            <input
+                id="scoreInput"
+                class="bg-gradient-to-r appearance-none from-red-500 to-green-500 w-full rounded-lg"
+                type="range"
+                min="0"
+                max="10"
+                value="5"
+                step="0.1"
+            />
+        </div>
+    </div>
+    <div id="animeDisplay" class="h-96 overflow-y-auto px-6"></div>
+</div>

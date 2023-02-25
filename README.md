@@ -7,6 +7,7 @@ Using
 -   webpack
 -   typescript
 -   tailwindcss
+-   jikan api - https://docs.api.jikan.moe/
 
 # TODO:
 

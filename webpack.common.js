@@ -36,6 +36,7 @@ module.exports = {
             ],
         }),
 
+        // uncomment later if want custom css
         // new CopyWebpackPlugin({
         //     patterns: [
         //         {
@@ -51,6 +52,21 @@ module.exports = {
             template: "./src/popup.html",
             filename: "popup.html",
             chunks: ["popup"],
+            cache: false,
+        }),
+        new HtmlWebpackPlugin({
+            template: "./src/home.html",
+            filename: "home.html",
+            cache: false,
+        }),
+        new HtmlWebpackPlugin({
+            template: "./src/add.html",
+            filename: "add.html",
+            cache: false,
+        }),
+        new HtmlWebpackPlugin({
+            template: "./src/settings.html",
+            filename: "settings.html",
             cache: false,
         }),
     ],
