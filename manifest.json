@@ -3,7 +3,7 @@
     "name": "What to Watch Now - mal",
     "version": "1.0.0",
 
-    "description": "A plain text description",
+    "description": "An overengineered solution to a problem that probably no one has but me",
     "action": {
         "default_popup": "popup.html",
         "default_title": "Click to open the menu!"

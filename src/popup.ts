@@ -1,4 +1,4 @@
-import { MasterList } from "./background";
+import { MasterList, RequestType } from "./background";
 import { getAnime } from "./getAnime";
 // need to import so webpack can bundle tailwind classes that are usable by the html
 import "./globals.css";
@@ -129,13 +129,25 @@ const injectHomePage = async () => {
         return;
     }
 
-    if (!masterList || !username || !masterList[username]) {
+    if (!masterList) {
         console.log(masterList);
 
         console.log(
-            "WTWN: alot of things could be wrong here but probably trying to access a list of a user doesn't exist"
+            "WTWN: masterList doesn't exist, probably didn't load list from cloud yet"
         );
 
+        return;
+    }
+
+    if (!username) {
+        console.log("WTWN: username isn't logged in");
+        return;
+    }
+
+    if (!masterList[username]) {
+        console.log(
+            "WTWN: trying to access a list of a user that doesn't exist"
+        );
         return;
     }
 
@@ -252,19 +264,22 @@ const getList = async () => {
         username: string;
         masterList: MasterList;
     }>((resolve, reject) => {
-        chrome.runtime.sendMessage("getList", function (response) {
-            const username = response.username;
-            const masterList: MasterList = response.masterList;
+        chrome.runtime.sendMessage(
+            { type: RequestType.GetList },
+            function (response) {
+                const username = response.username;
+                const masterList: MasterList = response.masterList;
 
-            if (username === "") {
-                reject("User is not logged in");
-                return;
+                if (username === "") {
+                    reject("User is not logged in");
+                    return;
+                }
+
+                document.getElementById("username")!.innerText = username;
+
+                resolve({ username, masterList });
             }
-
-            document.getElementById("username")!.innerText = username;
-
-            resolve({ username, masterList });
-        });
+        );
     });
 };
 

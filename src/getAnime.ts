@@ -9,6 +9,9 @@ export const getAnime = async (id: number) => {
     const response = await fetch(`https://api.jikan.moe/v4/anime/${id}`);
     const data = await response.json();
 
+    // 3 requests per second max so keep slow
+    await new Promise((resolve) => setTimeout(resolve, 250));
+
     /*
 		"mal_id": 0,
 		"url": "string",

@@ -11,20 +11,16 @@ Using
 
 # TODO:
 
--   if add anime from myanimelist that isn't in wtwn list, pop up popup.html asking to add it to wtwn
--   sync json file with chrome browser: https://developer.chrome.com/docs/extensions/reference/storage/#overview
--   save anime ids and rating to json file under current user
-
-## popup:
-
--   ui
 -   logo
 -   search function
 -   paginate top anime to watch in popup
 -   manually add/delete anime from list
 -   cache data (description, picture, name) for the top 10 anime to watch
+-   invalidate cache button
+-   make slider input available on all pages where edit anime is possible
 
 # Notes
 
+-   if u give a chrome function a callback, it will become synchronous (no need to wrap in promise)
 -   IF YOU ADD A NEW TS FILE, ADD IT TO THE WEBPACK CONFIG FILE (might be way to select all files in folder?)
--   not possible to make background script pop open popup.html
+-   not possible to make background script pop open popup.html bc of chrome security reasons
