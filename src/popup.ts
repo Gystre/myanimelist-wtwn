@@ -1,7 +1,8 @@
-import { MasterList, RequestType } from "./background";
+import { MasterList, PTWList, RequestType, SearchIndex } from "./background";
 import { getAnime } from "./getAnime";
 // need to import so webpack can bundle tailwind classes that are usable by the html
 import "./globals.css";
+import { decodeSearchIndex } from "./searchIndexSerialization";
 
 enum Menu {
     Home,
@@ -114,43 +115,38 @@ const injectAddPage = async () => {
     }
 };
 
-const injectHomePage = async () => {
-    await injectPage(Menu.Home);
+// local copy of master list to make search as fast as possible
+let cachedList: MasterList = {};
+let cachedSearchIndex: SearchIndex = {};
 
-    let username: string | undefined = undefined;
-    let masterList: MasterList | undefined = undefined;
-    try {
-        const response = await getList();
-        username = response.username;
-        masterList = response.masterList;
-    } catch (e) {
-        // set error text or smthn here
-        console.log(e);
-        return;
-    }
+// get list from background script
+const getList = (): Promise<{
+    masterList: MasterList | undefined;
+    username: string | undefined;
+}> => {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+            { type: RequestType.GetList },
+            function (response) {
+                console.log("getlist:", response);
 
-    if (!masterList) {
-        console.log(masterList);
+                const username = response.username;
+                const masterList: MasterList = response.masterList;
 
-        console.log(
-            "WTWN: masterList doesn't exist, probably didn't load list from cloud yet"
+                // undefined if not logged in
+                if (username === "") {
+                    reject(new Error("User not logged in"));
+                }
+
+                cachedList = masterList;
+                document.getElementById("username")!.innerText = username;
+                resolve({ masterList, username });
+            }
         );
+    });
+};
 
-        return;
-    }
-
-    if (!username) {
-        console.log("WTWN: username isn't logged in");
-        return;
-    }
-
-    if (!masterList[username]) {
-        console.log(
-            "WTWN: trying to access a list of a user that doesn't exist"
-        );
-        return;
-    }
-
+const populateHomeList = (list: PTWList) => {
     const animeDisplay = document.getElementById("animeDisplay");
     const exampleDisplay = document.getElementById("exampleDisplay");
 
@@ -158,44 +154,44 @@ const injectHomePage = async () => {
         return;
     }
 
-    // for each key in the list
-    const list = masterList[username];
+    // remove all nodes in in the list
+    while (animeDisplay.firstChild) {
+        animeDisplay.removeChild(animeDisplay.firstChild);
+    }
+    console.log("deleted");
+
     for (const id in list) {
-        const data = await getAnime(parseInt(id));
+        const data = list[id];
         const clonedDisplay = exampleDisplay.cloneNode(true) as Element;
         clonedDisplay.className = ""; // remove hidden class
 
-        clonedDisplay.querySelector("img")!.src = data.images.jpg.image_url;
+        clonedDisplay.querySelector("img")!.src = data.imageUrl;
 
         // slice off characters after 35
-        let title = data.title_english;
+        let title = data.title;
         if (title.length > 35) {
             title = title.slice(0, 35) + "...";
         }
         clonedDisplay.querySelector("theTitle")!.textContent = title;
 
-        // apply the genres
-        type TagEntry = {
-            mal_id: number;
-            type: string;
-            name: string;
-            url: string;
-        };
-
         let genres = "";
-        data.genres.forEach((genre: TagEntry) => {
-            genres += `${genre.name}, `;
+        data.genres.forEach((genre) => {
+            genres += `${genre}, `;
         });
         genres = genres.slice(0, -2);
         clonedDisplay.querySelector("genre")!.textContent += genres;
 
         // apply themes
         let themes = "";
-        data.themes.forEach((theme: TagEntry) => {
-            themes += `${theme.name}, `;
-        });
-        themes = themes.slice(0, -2);
-        clonedDisplay.querySelector("theme")!.textContent += themes;
+        if (data.themes.length != 0) {
+            data.themes.forEach((theme) => {
+                themes += `${theme}, `;
+            });
+            themes = themes.slice(0, -2);
+            clonedDisplay.querySelector("theme")!.textContent += themes;
+        } else {
+            clonedDisplay.querySelector("theme")!.remove();
+        }
 
         // open in new tab
         clonedDisplay
@@ -255,32 +251,95 @@ const injectHomePage = async () => {
         const spacer = document.createElement("div");
         spacer.className = "mb-4";
         animeDisplay.appendChild(spacer);
+        console.log("added");
     }
 };
 
-// get list from background script
-const getList = async () => {
-    return await new Promise<{
-        username: string;
-        masterList: MasterList;
-    }>((resolve, reject) => {
+const injectHomePage = async () => {
+    await injectPage(Menu.Home);
+
+    const { masterList, username } = await getList();
+
+    if (!username) {
+        console.log("WTWN: user isn't logged in");
+        return;
+    }
+
+    if (
+        !masterList ||
+        (Object.keys(masterList).length === 0 &&
+            masterList.constructor === Object)
+    ) {
+        console.log("WTWN: current user has no anime in list");
+
+        return;
+    }
+
+    if (!masterList[username]) {
+        console.log(username, masterList);
+        console.log(
+            "WTWN: trying to access a list of a user that doesn't exist"
+        );
+        return;
+    }
+
+    // get the search index
+    cachedSearchIndex = await new Promise<SearchIndex>((resolve) => {
         chrome.runtime.sendMessage(
-            { type: RequestType.GetList },
+            { type: RequestType.GetSearchIndexJSON },
             function (response) {
-                const username = response.username;
-                const masterList: MasterList = response.masterList;
-
-                if (username === "") {
-                    reject("User is not logged in");
-                    return;
-                }
-
-                document.getElementById("username")!.innerText = username;
-
-                resolve({ username, masterList });
+                resolve(decodeSearchIndex(response.searchIndexJSON));
             }
         );
     });
+
+    const list = masterList[username];
+    const searchInput = document.getElementById(
+        "searchInput"
+    ) as HTMLInputElement;
+
+    searchInput.addEventListener("input", () => {
+        if (searchInput.value.length === 0) {
+            populateHomeList(list);
+            return;
+        }
+
+        const keywords = searchInput.value.toLowerCase().split(" ");
+        const intersection = keywords.reduce((acc, keyword) => {
+            const matchingKeywords = Object.keys(cachedSearchIndex).filter(
+                (k) => k.startsWith(keyword)
+            );
+
+            // no matches
+            if (matchingKeywords.length === 0) return new Set<number>();
+
+            // get the indices of each matching keyword
+            const sets = matchingKeywords.map(
+                (k) => cachedSearchIndex[k] || new Set()
+            );
+
+            // get the intersection of all the sets
+            const intersection = sets.reduce(
+                (a, b) => new Set([...a].filter((i) => b.has(i)))
+            );
+
+            // add to the accumulator
+            return new Set(
+                [...acc].length === 0
+                    ? [...intersection]
+                    : [...acc].filter((i) => intersection.has(i))
+            );
+        }, new Set<number>());
+
+        let results: PTWList = {};
+        for (const i of intersection) {
+            results[i] = cachedList[username][i];
+        }
+
+        populateHomeList(results);
+    });
+
+    populateHomeList(list);
 };
 
 document.addEventListener("DOMContentLoaded", async () => {

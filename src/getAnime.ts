@@ -1,5 +1,5 @@
 /*
-keep id as number or string? seeems ez to keep it as a string bc that's how it's stored and transferred throughout the app
+keep id as number or string? seems ez to keep it as a string bc that's how it's stored and transferred throughout the app
 but keeping it as id seems more intuitive and easier to error check
 hm dunno
 */
