@@ -88,120 +88,45 @@ async function main() {
     //     "to left top, blue, red";
     // // background-image: linear-gradient(to right, var(--tw-gradient-stops));
 
-    // https://myanimelist.net/anime/51535/Shingeki_no_Kyojin__The_Final_Season_-_Kanketsu-hen
     let statusInput = document.querySelector<HTMLSelectElement>(
         'select[name="myinfo_status"]'
     ) as HTMLSelectElement;
     if (statusInput == null) {
-        // https://myanimelist.net/ownlist/anime/51535/edit
-        statusInput = document.getElementById(
-            "add_anime_status"
-        ) as HTMLSelectElement;
-
-        if (statusInput == null) {
-            console.log("WTWN: couldn't find status input");
-            return;
-        }
+        console.log("WTWN: couldn't find status input");
+        return;
     }
 
-    // https://myanimelist.net/anime/51535/Shingeki_no_Kyojin__The_Final_Season_-_Kanketsu-hen
     let addtolist = document.getElementById("addtolist");
-    if (addtolist) {
-        const p = document.createElement("p");
-        p.innerText = "How much do you want to watch this?";
-        addtolist.appendChild(p);
-        addtolist.appendChild(slider);
+    if (addtolist == null) {
+        console.log("WTWN: couldn't find addtolist");
+        return;
+    }
 
-        // only show slider if plan to watch
+    const p = document.createElement("p");
+    p.innerText = "How much do you want to watch this?";
+    addtolist.appendChild(p);
+    addtolist.appendChild(slider);
+
+    // only show slider if plan to watch
+    if (statusInput.value == "6") {
+        slider.style.display = "block";
+        p.style.display = "block";
+    }
+
+    statusInput.addEventListener("change", () => {
         if (statusInput.value == "6") {
             slider.style.display = "block";
             p.style.display = "block";
+        } else {
+            slider.style.display = "none";
+            p.style.display = "none";
         }
-
-        statusInput.addEventListener("change", () => {
-            if (statusInput.value == "6") {
-                slider.style.display = "block";
-                p.style.display = "block";
-            } else {
-                slider.style.display = "none";
-                p.style.display = "none";
-            }
-        });
-    } else {
-        // https://myanimelist.net/ownlist/anime/51535/edit
-        const tbody = document
-            .querySelector("form[name='add_anime']")
-            ?.querySelector("tbody");
-        if (tbody == null) {
-            console.log("WTWN: couldn't find anywhere to inject slider");
-            return;
-        }
-
-        /*
-        <tr>
-            <td class="borderClass" valign="top">Episodes Watched</td>
-            <td class="borderClass">
-                <input type="text" id="add_anime_num_watched_episodes" name="add_anime[num_watched_episodes]" class="inputtext" size="3" onchange="StatusBooleanCheck();" value="0" data-ddg-inputtype="unknown">
-                <a href="javascript:void(0);" id="increment_episode">+</a>
-                / <span id="totalEpisodes">0</span>
-                                    <small>
-                    <a href="/ajaxtb.php?keepThis=true&amp;detailedaid=51535&amp;TB_iframe=true&amp;height=420&amp;width=390" title="Episode Details" class="thickbox">History</a>
-                    </small>
-            </td>
-        </tr>
-        */
-
-        const tr = document.createElement("tr");
-        const td1 = document.createElement("td");
-        td1.className = "borderClass";
-        td1.innerHTML = "How much do you want to watch this?";
-        tr.appendChild(td1);
-
-        const td2 = document.createElement("td");
-        td2.className = "borderClass";
-        td2.appendChild(slider);
-        tr.appendChild(td2);
-
-        tbody.appendChild(tr);
-
-        if (statusInput == null) return;
-
-        if (statusInput.value == "6") {
-            slider.style.display = "block";
-            td1.style.display = "block";
-        }
-
-        statusInput.addEventListener("change", () => {
-            if (statusInput.value == "6") {
-                slider.style.display = "block";
-                td1.style.display = "block";
-            } else {
-                slider.style.display = "none";
-                td1.style.display = "none";
-            }
-        });
-    }
-
-    const mainForm = document.getElementById("main-form");
-    if (mainForm == null) return;
-
-    // connect to on submit
-    mainForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        alert("wut");
     });
 
-    // https://myanimelist.net/anime/51535/Shingeki_no_Kyojin__The_Final_Season_-_Kanketsu-hen
     let submitButton = document.querySelector('input[name="myinfo_submit"]');
     if (submitButton == null) {
-        // https://myanimelist.net/ownlist/anime/51535/edit
-        submitButton = document.querySelector('input[value="Submit"]');
-
-        if (submitButton == null) {
-            console.log("WTWN: couldn't find submit button");
-            return;
-        }
+        console.log("WTWN: couldn't find submit button");
+        return;
     }
 
     submitButton.addEventListener("click", () => {
