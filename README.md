@@ -12,10 +12,8 @@ Using
 # TODO:
 
 -   logo
--   search function
 -   paginate top anime to watch in popup
 -   manually add/delete anime from list
--   cache data (description, picture, name) for the top 10 anime to watch
 -   invalidate cache button
 -   make slider input available on all pages where edit anime is possible
 -   edit score in popup

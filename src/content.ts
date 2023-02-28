@@ -74,26 +74,12 @@ async function main() {
         id,
     });
 
-    // TODO: move slider to above Update button
-    const addToList = document.getElementById("addtolist");
-    if (addToList == null) return;
-
-    // add some text
-    const text = document.createElement("p");
-    text.innerHTML = "How much do you want to watch this?";
-    text.style.marginTop = "10px";
-    text.style.marginTop = "5px";
-    text.style.display = "none";
-    addToList.appendChild(text);
-
     const slider = document.createElement("input");
     slider.type = "range";
     slider.min = "0";
     slider.max = "10";
-
-    if (listData?.data.score == null) slider.value = "5";
-    else slider.value = listData?.data.score.toString();
-
+    if (!listData) slider.value = "5";
+    else slider.value = listData.data.score.toString();
     slider.step = "0.1";
     slider.style.width = "100%";
     slider.style.display = "none";
@@ -102,47 +88,130 @@ async function main() {
     //     "to left top, blue, red";
     // // background-image: linear-gradient(to right, var(--tw-gradient-stops));
 
-    addToList.appendChild(slider);
-
-    const statusInput = document.querySelector<HTMLSelectElement>(
+    // https://myanimelist.net/anime/51535/Shingeki_no_Kyojin__The_Final_Season_-_Kanketsu-hen
+    let statusInput = document.querySelector<HTMLSelectElement>(
         'select[name="myinfo_status"]'
-    );
-    if (statusInput == null) return;
+    ) as HTMLSelectElement;
+    if (statusInput == null) {
+        // https://myanimelist.net/ownlist/anime/51535/edit
+        statusInput = document.getElementById(
+            "add_anime_status"
+        ) as HTMLSelectElement;
 
-    // only show slider if plan to watch
-    if (statusInput.value == "6") {
-        slider.style.display = "block";
-        text.style.display = "block";
+        if (statusInput == null) {
+            console.log("WTWN: couldn't find status input");
+            return;
+        }
     }
 
-    statusInput.addEventListener("change", () => {
+    // https://myanimelist.net/anime/51535/Shingeki_no_Kyojin__The_Final_Season_-_Kanketsu-hen
+    let addtolist = document.getElementById("addtolist");
+    if (addtolist) {
+        const p = document.createElement("p");
+        p.innerText = "How much do you want to watch this?";
+        addtolist.appendChild(p);
+        addtolist.appendChild(slider);
+
+        // only show slider if plan to watch
         if (statusInput.value == "6") {
             slider.style.display = "block";
-            text.style.display = "block";
-        } else {
-            slider.style.display = "none";
-            text.style.display = "none";
+            p.style.display = "block";
         }
+
+        statusInput.addEventListener("change", () => {
+            if (statusInput.value == "6") {
+                slider.style.display = "block";
+                p.style.display = "block";
+            } else {
+                slider.style.display = "none";
+                p.style.display = "none";
+            }
+        });
+    } else {
+        // https://myanimelist.net/ownlist/anime/51535/edit
+        const tbody = document
+            .querySelector("form[name='add_anime']")
+            ?.querySelector("tbody");
+        if (tbody == null) {
+            console.log("WTWN: couldn't find anywhere to inject slider");
+            return;
+        }
+
+        /*
+        <tr>
+            <td class="borderClass" valign="top">Episodes Watched</td>
+            <td class="borderClass">
+                <input type="text" id="add_anime_num_watched_episodes" name="add_anime[num_watched_episodes]" class="inputtext" size="3" onchange="StatusBooleanCheck();" value="0" data-ddg-inputtype="unknown">
+                <a href="javascript:void(0);" id="increment_episode">+</a>
+                / <span id="totalEpisodes">0</span>
+                                    <small>
+                    <a href="/ajaxtb.php?keepThis=true&amp;detailedaid=51535&amp;TB_iframe=true&amp;height=420&amp;width=390" title="Episode Details" class="thickbox">History</a>
+                    </small>
+            </td>
+        </tr>
+        */
+
+        const tr = document.createElement("tr");
+        const td1 = document.createElement("td");
+        td1.className = "borderClass";
+        td1.innerHTML = "How much do you want to watch this?";
+        tr.appendChild(td1);
+
+        const td2 = document.createElement("td");
+        td2.className = "borderClass";
+        td2.appendChild(slider);
+        tr.appendChild(td2);
+
+        tbody.appendChild(tr);
+
+        if (statusInput == null) return;
+
+        if (statusInput.value == "6") {
+            slider.style.display = "block";
+            td1.style.display = "block";
+        }
+
+        statusInput.addEventListener("change", () => {
+            if (statusInput.value == "6") {
+                slider.style.display = "block";
+                td1.style.display = "block";
+            } else {
+                slider.style.display = "none";
+                td1.style.display = "none";
+            }
+        });
+    }
+
+    const mainForm = document.getElementById("main-form");
+    if (mainForm == null) return;
+
+    // connect to on submit
+    mainForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        alert("wut");
     });
 
-    // send message once button with name myinfo_submit is clicked
-    const submitButton = document.querySelector('input[name="myinfo_submit"]');
-    if (submitButton == null) return;
+    // https://myanimelist.net/anime/51535/Shingeki_no_Kyojin__The_Final_Season_-_Kanketsu-hen
+    let submitButton = document.querySelector('input[name="myinfo_submit"]');
+    if (submitButton == null) {
+        // https://myanimelist.net/ownlist/anime/51535/edit
+        submitButton = document.querySelector('input[value="Submit"]');
+
+        if (submitButton == null) {
+            console.log("WTWN: couldn't find submit button");
+            return;
+        }
+    }
 
     submitButton.addEventListener("click", () => {
         const score = parseInt(slider.value);
-
-        const status = parseInt(
-            document.querySelector<HTMLSelectElement>(
-                'select[name="myinfo_status"]'
-            )?.value as string
-        );
 
         chrome.runtime.sendMessage({
             type: RequestType.UpdateList,
             id,
             score,
-            status,
+            status: statusInput.value,
         });
     });
 }
