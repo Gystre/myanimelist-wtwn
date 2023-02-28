@@ -90,7 +90,10 @@ async function main() {
     slider.type = "range";
     slider.min = "0";
     slider.max = "10";
-    slider.value = listData?.data.score.toString() || "5";
+
+    if (listData?.data.score == null) slider.value = "5";
+    else slider.value = listData?.data.score.toString();
+
     slider.step = "0.1";
     slider.style.width = "100%";
     slider.style.display = "none";
