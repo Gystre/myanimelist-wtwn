@@ -9,6 +9,10 @@ module.exports = {
                 black10: "#cececf",
                 black5: "#d7d7d7",
             },
+            animation: {
+                shakeSideToSide: "shakeSideToSide 0.2s infinite",
+                shakeUpAndDown: "shakeUpAndDown 0.5s infinite",
+            },
         },
     },
     plugins: [],

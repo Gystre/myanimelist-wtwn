@@ -128,8 +128,6 @@ const getList = (): Promise<{
         chrome.runtime.sendMessage(
             { type: RequestType.GetList },
             function (response) {
-                console.log("getlist:", response);
-
                 const username = response.username;
                 const masterList: MasterList = response.masterList;
 
@@ -158,12 +156,12 @@ const populateHomeList = (list: PTWList) => {
     while (animeDisplay.firstChild) {
         animeDisplay.removeChild(animeDisplay.firstChild);
     }
-    console.log("deleted");
 
     for (const id in list) {
         const data = list[id];
         const clonedDisplay = exampleDisplay.cloneNode(true) as Element;
         clonedDisplay.className = ""; // remove hidden class
+        clonedDisplay.id = id;
 
         clonedDisplay.querySelector("img")!.src = data.imageUrl;
 
@@ -241,17 +239,51 @@ const populateHomeList = (list: PTWList) => {
         ) as HTMLInputElement;
         scoreInput.value = list[id].score.toString();
 
-        // TODO: add edit function later, still need to figure out how i want the slider to look like
-        // clonedDisplay.querySelector("button")!.addEventListener("click", () => {
-        //     console.log("edit", id);
-        // });
+        let oldScore = list[id].score;
+        const saveButton = clonedDisplay.querySelector(
+            "#saveButton"
+        ) as Element;
+
+        saveButton.addEventListener("click", () => {
+            const score = scoreInput.value;
+            const id = clonedDisplay.id;
+
+            if (score === oldScore.toString()) {
+                saveButton.classList.add("text-red-500");
+                saveButton.classList.add("animate-shakeSideToSide");
+                setTimeout(() => {
+                    saveButton.classList.remove("text-red-500");
+                    saveButton.classList.remove("animate-shakeSideToSide");
+                }, 500);
+
+                return;
+            }
+
+            chrome.runtime.sendMessage(
+                {
+                    type: RequestType.SetScore,
+                    id: id,
+                    score: score,
+                },
+                function () {
+                    // in case user wants to set it back to their original score
+                    oldScore = parseInt(score);
+
+                    saveButton.classList.add("text-green-500");
+                    saveButton.classList.add("animate-shakeUpAndDown");
+                    setTimeout(() => {
+                        saveButton.classList.remove("text-green-500");
+                        saveButton.classList.remove("animate-shakeUpAndDown");
+                    }, 500);
+                }
+            );
+        });
 
         animeDisplay.appendChild(clonedDisplay);
 
         const spacer = document.createElement("div");
         spacer.className = "mb-4";
         animeDisplay.appendChild(spacer);
-        console.log("added");
     }
 };
 
@@ -342,6 +374,10 @@ const injectHomePage = async () => {
     populateHomeList(list);
 };
 
+const injectSettingsPage = () => {
+    injectPage(Menu.Settings);
+};
+
 document.addEventListener("DOMContentLoaded", async () => {
     // attach on click for navbar buttons
     const homeButton = document.getElementById("homeButton");
@@ -361,7 +397,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const settingsButton = document.getElementById("settingsButton");
     if (settingsButton) {
         settingsButton.addEventListener("click", () => {
-            // injectPage(Menu.Settings);
+            injectSettingsPage();
         });
     }
 

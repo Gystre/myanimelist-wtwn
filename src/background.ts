@@ -193,6 +193,7 @@ export enum RequestType {
     // writes
     SetUsername = "setUsername",
     UpdateList = "updateList",
+    SetScore = "setScore",
 
     // reads
     GetList = "getList",
@@ -230,5 +231,9 @@ chrome.runtime.onMessage.addListener(async function (
         sendResponse({ data: masterList[request.username][request.id] });
     } else if (request.type == RequestType.GetSearchIndexJSON) {
         sendResponse({ searchIndexJSON: encodeSearchIndex(searchIndex) });
+    } else if (request.type == RequestType.SetScore) {
+        const id = request.id as number;
+        const score = request.score as number;
+        masterList[username][id].score = score;
     }
 });

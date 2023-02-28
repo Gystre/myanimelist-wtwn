@@ -9,15 +9,14 @@ Using
 -   tailwindcss
 -   jikan api - https://docs.api.jikan.moe/
 
-# TODO:
+# TODO
 
 -   logo
 -   paginate top anime to watch in popup
 -   manually add/delete anime from list
--   invalidate cache button
--   make slider input available on all pages where edit anime is possible
--   edit score in popup
--   settings page (delete all data, save/load data to/from json, )
+-   get all unscored PTW list from current user and have menu for them to score each, one by one in a tinder style fashion
+-   settings page (delete all data or save/load data to/from json)
+-   keep track of last logged in user (so don't need to rely on content script to get the current user)
 
 # Bugs
 
