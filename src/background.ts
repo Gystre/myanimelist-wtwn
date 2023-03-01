@@ -46,17 +46,20 @@ export type SearchIndex = {
 };
 let searchIndex: SearchIndex = {}; // reverse index data structure
 
-const loadFromCloud = async () => {
-    return await new Promise<void>((resolve) => {
-        chrome.storage.sync.get("data", (result) => {
-            if (result.data) {
-                masterList = result.data.masterList;
-                searchIndex = decodeSearchIndex(result.data.searchIndexJSON);
-                resolve();
-            } else {
-                console.log("WTWN: no data found in cloud");
-            }
-        });
+const loadFromCloud = () => {
+    chrome.storage.sync.get("data", (result) => {
+        if (result.data) {
+            masterList = result.data.masterList;
+            searchIndex = decodeSearchIndex(result.data.searchIndexJSON);
+        } else {
+            console.log("WTWN: no data found in cloud");
+        }
+    });
+
+    chrome.storage.sync.get("username", (result) => {
+        if (result.username) {
+            username = result.username;
+        }
     });
 };
 
@@ -203,21 +206,15 @@ export enum RequestType {
 
 // background msg handler
 // msgs can come from popup or content scripts
-chrome.runtime.onMessage.addListener(async function (
-    request,
-    sender,
-    sendResponse
-) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     // user is logged in but list is empty
     if (Object.keys(masterList).length == 0 && username != "") {
-        await loadFromCloud();
-
-        // doesn't always load the data here?
-        console.log("loaded data", masterList, searchIndex);
+        loadFromCloud();
     }
 
     if (request.type == RequestType.SetUsername) {
         username = request.username;
+        chrome.storage.sync.set({ username });
     } else if (request.type == RequestType.UpdateList) {
         const id = request.id as number;
         const score = request.score as number;

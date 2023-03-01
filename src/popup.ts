@@ -173,13 +173,16 @@ const populateHomeList = (list: PTWList) => {
         clonedDisplay.querySelector("theTitle")!.textContent = title;
 
         let genres = "";
-        data.genres.forEach((genre) => {
-            genres += `${genre}, `;
-        });
-        genres = genres.slice(0, -2);
-        clonedDisplay.querySelector("genre")!.textContent += genres;
+        if (data.genres.length != 0) {
+            data.genres.forEach((genre) => {
+                genres += `${genre}, `;
+            });
+            genres = genres.slice(0, -2);
+            clonedDisplay.querySelector("genre")!.textContent += genres;
+        } else {
+            clonedDisplay.querySelector("genre")!.remove();
+        }
 
-        // apply themes
         let themes = "";
         if (data.themes.length != 0) {
             data.themes.forEach((theme) => {
