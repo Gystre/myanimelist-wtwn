@@ -1,5 +1,4 @@
 import { MasterList, PTWList, RequestType, SearchIndex } from "./background";
-import { getAnime } from "./getAnime";
 // need to import so webpack can bundle tailwind classes that are usable by the html
 import "./globals.css";
 import { decodeSearchIndex } from "./searchIndexSerialization";
@@ -50,69 +49,34 @@ const injectPage = async (page: Menu) => {
 const injectAddPage = async () => {
     await injectPage(Menu.Add);
 
-    // update the rating as the user interacts with the slider
-    const ratingInput = document.getElementById("rating") as HTMLInputElement;
-    if (ratingInput) {
-        ratingInput.addEventListener("input", () => {
-            const rating = document.getElementById("ratingValue");
-            if (rating) {
-                rating.innerText = ratingInput.value;
+    const username = await new Promise<string>(function (resolve) {
+        chrome.runtime.sendMessage(
+            { type: RequestType.GetUsername },
+            function (response) {
+                document.getElementById("username")!.innerText =
+                    response.username;
+                resolve(response.username);
             }
-        });
+        );
+    });
+
+    const infoText = document.getElementById(
+        "infoText"
+    ) as HTMLParagraphElement;
+
+    if (username == "") {
+        infoText.innerText = "You aren't logged in!";
+        return;
     }
 
-    // add event listener for submit button
-    const submitButton = document.getElementById("addSubmit");
-    if (submitButton) {
-        submitButton.addEventListener("click", () => {
-            const ratingInput = document.getElementById(
-                "rating"
-            ) as HTMLInputElement;
-            const linkInput = document.getElementById(
-                "linkInput"
-            ) as HTMLInputElement;
+    let offset = 0;
+    chrome.runtime.sendMessage(
+        { type: RequestType.getUnscoredPTWList, offset },
+        function (response) {}
+    );
 
-            const link = linkInput.value;
-            if (link.length === 0) {
-                // set error text at #errorLink
-                document.getElementById("errorLink")!.innerText =
-                    "Link cannot be empty";
-                return;
-            }
-
-            // get id by deleting getting the 2nd to last part of the link
-            const id = parseInt(link.split("/").slice(-2)[0]);
-            console.log(id);
-            if (!id) {
-                // set error text at #errorLink
-                document.getElementById("errorLink")!.innerText =
-                    "Link is invalid";
-                return;
-            }
-
-            console.log(ratingInput.value, link);
-
-            getAnime(id).then((data) => {
-                // send message to background script to add to list
-                //     chrome.runtime.sendMessage(
-                //         {
-                //             type: "add",
-                //             username: username.value,
-                //             id: id.value,
-                //             password: password.value,
-                //         },
-                //         function (response) {
-                //             console.log(response);
-                //         }
-                //     );
-                // });
-
-                document.getElementById(
-                    "successText"
-                )!.innerText = `Added ${data.title_english} to your list`;
-            });
-        });
-    }
+    // ask background script for user's PTW list, if doesn't exist fetch it
+    // also username scrape doesn't work on https://myanimelist.net/animelist/saist?status=6
 };
 
 // local copy of master list to make search as fast as possible
@@ -404,5 +368,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    await injectHomePage();
+    // await injectHomePage();
+    await injectAddPage();
 });

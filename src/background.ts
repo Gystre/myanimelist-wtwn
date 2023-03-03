@@ -13,7 +13,7 @@ enum Status {
 }
 
 // empty username = not signed in
-let username = "saist";
+let username = "";
 
 export type ListData = {
     // 0-10
@@ -47,18 +47,24 @@ export type SearchIndex = {
 let searchIndex: SearchIndex = {}; // reverse index data structure
 
 const loadFromCloud = () => {
+    chrome.storage.sync.get("username", (result) => {
+        if (result.username) {
+            username = result.username;
+        }
+    });
+
     chrome.storage.sync.get("data", (result) => {
         if (result.data) {
             masterList = result.data.masterList;
             searchIndex = decodeSearchIndex(result.data.searchIndexJSON);
         } else {
-            console.log("WTWN: no data found in cloud");
+            console.log("WTWN: no list data found in cloud");
         }
     });
 
-    chrome.storage.sync.get("username", (result) => {
-        if (result.username) {
-            username = result.username;
+    chrome.storage.sync.get("unscoredPTWList", (result) => {
+        if (result.unscoredPTWList) {
+            unscoredPTWList = result.unscoredPTWList;
         }
     });
 };
@@ -191,6 +197,169 @@ const updateList = async (id: number, score: number, status: Status) => {
     });
 };
 
+type MALData = {
+    id: number;
+    title: string;
+    url: string;
+    imageUrl: string;
+    genres: string[];
+    notes: string;
+
+    // fetch these from jikan api and cache if user wants them
+    description?: string;
+    themes?: string[];
+};
+
+let unscoredPTWList: MALData[] = [];
+
+const getUnscoredPTWList = async () => {
+    if (username == "") {
+        console.log("WTWN: user is not signed in");
+        return;
+    }
+
+    if (unscoredPTWList.length > 0) return;
+
+    let maxListLength = await new Promise<number>(function (resolve) {
+        chrome.storage.sync.get("maxListLength", (result) => {
+            if (result.maxListLength) {
+                resolve(result.maxListLength);
+            } else {
+                resolve(-1);
+            }
+        });
+    });
+
+    // keep requesting the list to find maximum list length
+    let ptwList = [];
+    if (maxListLength == -1) {
+        let offset = 0;
+        while (true) {
+            // order by last updated, descending (newest first)
+            const response = await fetch(
+                `https://myanimelist.net/animelist/${username}/load.json?status=6&offset=${offset}&order=5`
+            );
+
+            const data = await response.json();
+            if (data.length === 0) {
+                console.log("WTWN: no more unscored PTW entries");
+                break;
+            }
+
+            ptwList.push(data);
+        }
+
+        chrome.storage.sync.set({
+            maxListLength: ptwList.length,
+        });
+    } else {
+        // we have fetched the list before, so just start at the last offset
+
+        // can only get 300 entries at a time so will be in increments of 300
+        // 0, 300, 600, 900, ...
+        let lastOffset = await new Promise<number>(function (resolve) {
+            chrome.storage.sync.get("lastOffset", (result) => {
+                if (result.lastOffset) {
+                    resolve(result.lastOffset);
+                } else {
+                    resolve(0);
+                }
+            });
+        });
+
+        const response = await fetch(
+            `https://myanimelist.net/animelist/${username}/load.json?status=6&offset=${lastOffset}&order=5`
+        );
+
+        const data = await response.json();
+        if (data.length === 0) {
+            console.log("WTWN: no more unscored PTW entries");
+        }
+
+        ptwList.push(data);
+    }
+
+    console.log(ptwList);
+
+    /*
+        {
+            "status": 6,
+            "score": 0,
+            "tags": "",
+            "is_rewatching": 0,
+            "num_watched_episodes": 0,
+            "created_at": 1622785759,
+            "updated_at": 1622785854,
+            "anime_title": "Shuumatsu Nani Shitemasu ka? Isogashii desu ka? Sukutte Moratte Ii desu ka?",
+            "anime_title_eng": "WorldEnd: What do you do at the end of the world? Are you busy? Will you save us?",
+            "anime_num_episodes": 12,
+            "anime_airing_status": 2,
+            "anime_id": 33502,
+            "anime_studios": null,
+            "anime_licensors": null,
+            "anime_season": null,
+            "anime_total_members": 373785,
+            "anime_total_scores": 179240,
+            "anime_score_val": 7.68,
+            "has_episode_video": true,
+            "has_promotion_video": true,
+            "has_video": true,
+            "video_url": "/anime/33502/Shuumatsu_Nani_Shitemasu_ka_Isogashii_desu_ka_Sukutte_Moratte_Ii_desu_ka/video",
+            "genres": [
+                {
+                    "id": 8,
+                    "name": "Drama"
+                },
+                {
+                    "id": 10,
+                    "name": "Fantasy"
+                },
+                {
+                    "id": 22,
+                    "name": "Romance"
+                },
+                {
+                    "id": 24,
+                    "name": "Sci-Fi"
+                }
+            ],
+            "demographics": [],
+            "title_localized": null,
+            "anime_url": "/anime/33502/Shuumatsu_Nani_Shitemasu_ka_Isogashii_desu_ka_Sukutte_Moratte_Ii_desu_ka",
+            "anime_image_path": "https://cdn.myanimelist.net/r/192x272/images/anime/4/85260.jpg?s=730a42ad6d970601fee8329d87df03fe",
+            "is_added_to_list": true,
+            "anime_media_type_string": "TV",
+            "anime_mpaa_rating_string": "PG-13",
+            "start_date_string": null,
+            "finish_date_string": null,
+            "anime_start_date_string": "04-11-17",
+            "anime_end_date_string": "06-27-17",
+            "days_string": null,
+            "storage_string": "",
+            "priority_string": "Low",
+            "notes": "",
+            "editable_notes": ""
+        }
+    */
+
+    for (let i = 0; i < ptwList.length; i++) {
+        const anime = ptwList[i];
+        const id = anime.anime_id;
+        if (masterList[username][id]) continue;
+
+        const data: MALData = {
+            id,
+            title: anime.anime_title,
+            url: "https://myanimelist.net" + anime.anime_url,
+            imageUrl: anime.anime_image_path,
+            genres: anime.genres.map((genre: any) => genre.name),
+            notes: anime.notes,
+        };
+
+        unscoredPTWList.push(data);
+    }
+};
+
 // can take this one step further by creating custom types for each request but that's too much work for now
 export enum RequestType {
     // writes
@@ -199,22 +368,26 @@ export enum RequestType {
     SetScore = "setScore",
 
     // reads
+    GetUsername = "getUsername",
     GetList = "getList",
     GetData = "getData", // need username and id of data we want to get
     GetSearchIndexJSON = "getSearchIndexJSON",
+    getUnscoredPTWList = "getUnscoredPTWList",
 }
 
 // background msg handler
 // msgs can come from popup or content scripts
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    // user is logged in but list is empty
-    if (Object.keys(masterList).length == 0 && username != "") {
+    // user isn't logged in
+    if (username === "") {
         loadFromCloud();
     }
 
     if (request.type == RequestType.SetUsername) {
         username = request.username;
         chrome.storage.sync.set({ username });
+    } else if (request.type == RequestType.GetUsername) {
+        sendResponse({ username });
     } else if (request.type == RequestType.UpdateList) {
         const id = request.id as number;
         const score = request.score as number;
@@ -232,5 +405,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         const id = request.id as number;
         const score = request.score as number;
         masterList[username][id].score = score;
+    } else if (request.type == RequestType.getUnscoredPTWList) {
+        getUnscoredPTWList().then((ptwList) => {
+            sendResponse({ ptwList });
+        });
     }
 });
