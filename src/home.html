@@ -4,7 +4,7 @@
             class="bg-black5 text-black text-md rounded-lg w-full px-4 py-2"
             type="text"
             id="searchInput"
-            placeholder="Search via keywords (e.g. 'action' or 'romance')"
+            placeholder="Search via keywords (e.g. '9.8', 'action' or 'romance')"
         />
     </div>
 
@@ -77,5 +77,32 @@
             />
         </div>
     </div>
-    <div id="animeDisplay" class="h-96 overflow-y-auto px-6"></div>
+    <button
+        id="showMore"
+        class="bg-primary text-white px-2 py-1 rounded-md hidden mb-2"
+    >
+        <div class="flex justify-center items-center">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-6 h-6"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 4.5v15m7.5-7.5h-15"
+                />
+            </svg>
+
+            <div class="mr-2"></div>
+            Show 50 more
+        </div>
+    </button>
+    <div
+        id="animeDisplay"
+        class="flex flex-col h-96 overflow-y-auto px-6"
+    ></div>
 </div>

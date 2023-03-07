@@ -57,6 +57,15 @@ const loadFromCloud = () => {
         if (result.data) {
             masterList = result.data.masterList;
             searchIndex = decodeSearchIndex(result.data.searchIndexJSON);
+
+            // print size of masterList and searchIndex in bytes
+            console.log(
+                "WTWN: loaded data from cloud, masterList size: " +
+                    JSON.stringify(masterList).length +
+                    " bytes, searchIndex size: " +
+                    JSON.stringify(searchIndex).length +
+                    " bytes"
+            );
         } else {
             console.log("WTWN: no list data found in cloud");
         }
@@ -165,6 +174,8 @@ const updateList = async (id: number, score: number, status: Status) => {
             keywords.push(data.genres[i].name.toLowerCase());
             genres.push(data.genres[i].name);
         }
+
+        keywords.push(score.toString());
 
         for (let i = 0; i < keywords.length; i++) {
             const keyword = keywords[i];
@@ -370,9 +381,9 @@ export enum RequestType {
     // reads
     GetUsername = "getUsername",
     GetList = "getList",
-    GetData = "getData", // need username and id of data we want to get
+    GetListLength = "getListLength",
+    GetScore = "getScore", // need username and id of data we want to get
     GetSearchIndexJSON = "getSearchIndexJSON",
-    getUnscoredPTWList = "getUnscoredPTWList",
 }
 
 // background msg handler
@@ -385,7 +396,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
     if (request.type == RequestType.SetUsername) {
         username = request.username;
-        chrome.storage.sync.set({ username });
+        chrome.storage.sync.set({ username }, function () {});
     } else if (request.type == RequestType.GetUsername) {
         sendResponse({ username });
     } else if (request.type == RequestType.UpdateList) {
@@ -396,18 +407,26 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         updateList(id, score, status);
     } else if (request.type == RequestType.GetList) {
         sendResponse({ username, masterList });
-    } else if (request.type == RequestType.GetData) {
-        // sending whole list instead of just the data we want?
-        sendResponse({ data: masterList[request.username][request.id] });
+    } else if (request.type == RequestType.GetListLength) {
+        sendResponse({ listLength: Object.keys(masterList[username]).length });
+    } else if (request.type == RequestType.GetScore) {
+        if (!masterList[username]) {
+            sendResponse({ score: undefined });
+            return;
+        }
+
+        // anime not in the list
+        if (!masterList[username][request.id]) {
+            sendResponse({ score: undefined });
+            return;
+        }
+
+        sendResponse({ score: masterList[request.username][request.id].score });
     } else if (request.type == RequestType.GetSearchIndexJSON) {
         sendResponse({ searchIndexJSON: encodeSearchIndex(searchIndex) });
     } else if (request.type == RequestType.SetScore) {
         const id = request.id as number;
         const score = request.score as number;
         masterList[username][id].score = score;
-    } else if (request.type == RequestType.getUnscoredPTWList) {
-        getUnscoredPTWList().then((ptwList) => {
-            sendResponse({ ptwList });
-        });
     }
 });

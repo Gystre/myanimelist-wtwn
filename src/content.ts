@@ -1,4 +1,4 @@
-import { ListData, RequestType } from "./background";
+import { RequestType } from "./background";
 
 async function main() {
     // empty username = not signed in
@@ -68,9 +68,8 @@ async function main() {
 
     // check if there's data that already exists for this anime
     const id = parseInt(window.location.href.split("/").slice(-2)[0]);
-    let listData: { data: ListData } = await chrome.runtime.sendMessage({
-        type: RequestType.GetData,
-        username,
+    let { score }: { score: number } = await chrome.runtime.sendMessage({
+        type: RequestType.GetScore,
         id,
     });
 
@@ -78,8 +77,8 @@ async function main() {
     slider.type = "range";
     slider.min = "0";
     slider.max = "10";
-    if (!listData) slider.value = "5";
-    else slider.value = listData.data.score.toString();
+    if (!score) slider.value = "5";
+    else slider.value = score.toString();
     slider.step = "0.1";
     slider.style.width = "100%";
     slider.style.display = "none";

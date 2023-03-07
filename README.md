@@ -12,14 +12,11 @@ Using
 # TODO
 
 -   logo
--   paginate top anime to watch in popup
--   get all unscored PTW list from current user and have menu for them to score each, one by one in a tinder style fashion
 -   settings page (delete all data or save/load data to/from json)
--   add score to reverse index
 
 # Bugs
 
--   open up popup after editing code, getList will return undefined. Maybe background script still refreshing while opening popup?
+-   username scraper doesn't work on animelist page
 
 # Notes
 

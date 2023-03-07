@@ -4,6 +4,7 @@ export type SearchIndexJSON = {
     [index: string]: number[];
 };
 
+// the data inside each array is supposed to be a Set but it's saved as an array in chrome.storage.sync
 export const encodeSearchIndex = (searchIndex: SearchIndex) => {
     let searchIndexJSON: SearchIndexJSON = {};
     for (let keyword in searchIndex) {

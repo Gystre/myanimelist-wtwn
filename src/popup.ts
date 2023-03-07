@@ -53,8 +53,6 @@ const injectAddPage = async () => {
         chrome.runtime.sendMessage(
             { type: RequestType.GetUsername },
             function (response) {
-                document.getElementById("username")!.innerText =
-                    response.username;
                 resolve(response.username);
             }
         );
@@ -68,12 +66,6 @@ const injectAddPage = async () => {
         infoText.innerText = "You aren't logged in!";
         return;
     }
-
-    let offset = 0;
-    chrome.runtime.sendMessage(
-        { type: RequestType.getUnscoredPTWList, offset },
-        function (response) {}
-    );
 
     // ask background script for user's PTW list, if doesn't exist fetch it
     // also username scrape doesn't work on https://myanimelist.net/animelist/saist?status=6
@@ -108,7 +100,10 @@ const getList = (): Promise<{
     });
 };
 
-const populateHomeList = (list: PTWList) => {
+let showAmt = 10;
+let ptwList: PTWList = {};
+// how many anime to show on home page
+const populateHomeList = (list: PTWList, topScoreIds?: string[]) => {
     const animeDisplay = document.getElementById("animeDisplay");
     const exampleDisplay = document.getElementById("exampleDisplay");
 
@@ -236,6 +231,8 @@ const populateHomeList = (list: PTWList) => {
                     // in case user wants to set it back to their original score
                     oldScore = parseInt(score);
 
+                    console.log(`WTWN: score saved for ${id} as ${score}`);
+
                     saveButton.classList.add("text-green-500");
                     saveButton.classList.add("animate-shakeUpAndDown");
                     setTimeout(() => {
@@ -252,6 +249,29 @@ const populateHomeList = (list: PTWList) => {
         spacer.className = "mb-4";
         animeDisplay.appendChild(spacer);
     }
+
+    if (!topScoreIds) {
+        return;
+    }
+
+    const showMore = document
+        .getElementById("showMore")
+        ?.cloneNode(true) as Element;
+    if (!showMore) {
+        return;
+    }
+
+    showMore.className = showMore.className.replace("hidden", "");
+    showMore.addEventListener("click", () => {
+        showAmt += 10;
+        const showList = topScoreIds
+            .slice(0, showAmt)
+            .map((id) => ptwList[parseInt(id)]);
+
+        populateHomeList(showList);
+    });
+
+    animeDisplay.appendChild(showMore);
 };
 
 const injectHomePage = async () => {
@@ -292,14 +312,22 @@ const injectHomePage = async () => {
         );
     });
 
-    const list = masterList[username];
+    ptwList = masterList[username];
     const searchInput = document.getElementById(
         "searchInput"
     ) as HTMLInputElement;
 
+    // get the top 10 anime that the user wants to watch
+    const topScoreIds = Object.keys(ptwList).sort(
+        (a, b) => ptwList[parseInt(b)].score - ptwList[parseInt(a)].score
+    );
+    const showList = topScoreIds
+        .slice(0, showAmt)
+        .map((id) => ptwList[parseInt(id)]);
+
     searchInput.addEventListener("input", () => {
         if (searchInput.value.length === 0) {
-            populateHomeList(list);
+            populateHomeList(showList, topScoreIds);
             return;
         }
 
@@ -338,7 +366,7 @@ const injectHomePage = async () => {
         populateHomeList(results);
     });
 
-    populateHomeList(list);
+    populateHomeList(showList, topScoreIds);
 };
 
 const injectSettingsPage = () => {
@@ -346,7 +374,39 @@ const injectSettingsPage = () => {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // attach on click for navbar buttons
+    let username = "";
+    while (username === "") {
+        username = await new Promise<string>(function (resolve) {
+            chrome.runtime.sendMessage(
+                { type: RequestType.GetUsername },
+                function (response) {
+                    document.getElementById("username")!.innerText =
+                        response.username;
+
+                    resolve(response.username);
+                }
+            );
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
+    // getting typescript errors now?
+
+    if (username != "") {
+        await new Promise(function (resolve) {
+            chrome.runtime.sendMessage(
+                { type: RequestType.GetListLength },
+                function (response) {
+                    document.getElementById(
+                        "listLength"
+                    )!.innerText = `Plan to Watch: ${response.listLength}`;
+                    resolve(response.listLength);
+                }
+            );
+        });
+    }
+
     const homeButton = document.getElementById("homeButton");
     if (homeButton) {
         homeButton.addEventListener("click", async () => {
@@ -368,6 +428,5 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // await injectHomePage();
-    await injectAddPage();
+    await injectHomePage();
 });
