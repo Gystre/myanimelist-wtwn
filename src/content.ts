@@ -8,12 +8,11 @@ async function main() {
     // check for Sign Up text if on any other page
 
     // anime list and manga list will have the username in the url
-    const url = window.location.href;
-    const stuffAfterDotNet = url.split(".net")[1];
+    const url = new URL(window.location.href);
 
     if (
-        stuffAfterDotNet.includes("animelist") ||
-        stuffAfterDotNet.includes("mangalist")
+        url.pathname.includes("animelist") ||
+        url.pathname.includes("mangalist")
     ) {
         const register = "/register.php";
         const links = document.querySelectorAll<HTMLAnchorElement>(
@@ -29,7 +28,9 @@ async function main() {
             return;
         }
 
-        username = url.split("/").pop() as string;
+        // https://myanimelist.net/animelist/saist?status=1
+        // get the username
+        username = url.pathname.split("/").pop() as string;
     } else {
         // user is on the main page and isn't signed in
         const signupButton = document.getElementsByClassName("btn-signup");
@@ -52,6 +53,7 @@ async function main() {
                 username = link.href.split("/").pop() as string;
             }
         });
+        console.log(username);
     }
 
     // send username to background script

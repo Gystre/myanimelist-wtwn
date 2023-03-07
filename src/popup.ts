@@ -66,9 +66,6 @@ const injectAddPage = async () => {
         infoText.innerText = "You aren't logged in!";
         return;
     }
-
-    // ask background script for user's PTW list, if doesn't exist fetch it
-    // also username scrape doesn't work on https://myanimelist.net/animelist/saist?status=6
 };
 
 // local copy of master list to make search as fast as possible
@@ -295,7 +292,6 @@ const injectHomePage = async () => {
     }
 
     if (!masterList[username]) {
-        console.log(username, masterList);
         console.log(
             "WTWN: trying to access a list of a user that doesn't exist"
         );
@@ -335,7 +331,7 @@ const injectHomePage = async () => {
         const intersection = keywords.reduce((acc, keyword) => {
             const matchingKeywords = Object.keys(cachedSearchIndex).filter(
                 (k) => k.startsWith(keyword)
-            );
+            ) as string[];
 
             // no matches
             if (matchingKeywords.length === 0) return new Set<number>();
@@ -369,14 +365,39 @@ const injectHomePage = async () => {
     populateHomeList(showList, topScoreIds);
 };
 
-const injectSettingsPage = () => {
-    injectPage(Menu.Settings);
+const injectSettingsPage = async () => {
+    await injectPage(Menu.Settings);
+
+    const usernameInput = document.getElementById(
+        "usernameInput"
+    ) as HTMLInputElement;
+
+    usernameInput.value = currentUsername;
+
+    const saveButton = document.getElementById("saveButton") as Element;
+    saveButton.addEventListener("click", () => {
+        chrome.runtime.sendMessage(
+            {
+                type: RequestType.SetUsername,
+                username: usernameInput.value,
+            },
+            function () {
+                console.log(`WTWN: username saved as ${usernameInput.value}`);
+                saveButton.classList.add("bg-green-500");
+                saveButton.classList.add("animate-shakeUpAndDown");
+                setTimeout(() => {
+                    saveButton.classList.remove("bg-green-500");
+                    saveButton.classList.remove("animate-shakeUpAndDown");
+                }, 500);
+            }
+        );
+    });
 };
 
+let currentUsername = "";
 document.addEventListener("DOMContentLoaded", async () => {
-    let username = "";
-    while (username === "") {
-        username = await new Promise<string>(function (resolve) {
+    while (currentUsername === "") {
+        currentUsername = await new Promise<string>(function (resolve) {
             chrome.runtime.sendMessage(
                 { type: RequestType.GetUsername },
                 function (response) {
@@ -391,9 +412,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
-    // getting typescript errors now?
-
-    if (username != "") {
+    if (currentUsername != "") {
         await new Promise(function (resolve) {
             chrome.runtime.sendMessage(
                 { type: RequestType.GetListLength },
@@ -423,8 +442,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const settingsButton = document.getElementById("settingsButton");
     if (settingsButton) {
-        settingsButton.addEventListener("click", () => {
-            injectSettingsPage();
+        settingsButton.addEventListener("click", async () => {
+            await injectSettingsPage();
         });
     }
 
